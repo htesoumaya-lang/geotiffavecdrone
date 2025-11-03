@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Drone Image Composite + Leaflet</title>
+<title>Composite Drone + Leaflet</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
@@ -15,10 +15,6 @@
       height: 100%;
       margin: 0;
       padding: 0;
-      display: flex;
-      justify-content: center; /* horizontal */
-      align-items: center;     /* vertical */
-      background: #2c3e50;
   }
 
   /* Carte Leaflet en fond */
@@ -31,14 +27,18 @@
       z-index: 0;
   }
 
-  /* Grille de tuiles centrée */
-  .image-grid {
+  /* Grille composite centrée */
+  #imageGrid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       grid-template-rows: repeat(4, 1fr);
       gap: 0;
       width: 1024px;
       height: 1024px;
+      position: absolute; /* positionné par rapport à la page */
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%); /* centrage exact */
       z-index: 100; /* devant la carte */
   }
 
@@ -52,8 +52,7 @@
 <body>
 
 <div id="map"></div>
-
-<div class="image-grid" id="imageGrid"></div>
+<div id="imageGrid"></div>
 
 <script>
   // Leaflet map
@@ -63,10 +62,9 @@
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
   }).addTo(map);
 
-  // Ordre exact des tuiles pour la composite
+  // Tuiles dans l'ordre exact
   const tilePaths = ["1_0.png","1.png","2.png","3.png","4.png","5.png","6.png","7.png",
                      "8.png","9.png","10.png","11.png","12.png","13.png","14.png","15.png"];
-
   const grid = document.getElementById('imageGrid');
   tilePaths.forEach((path, index) => {
       const img = document.createElement('img');
