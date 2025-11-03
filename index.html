@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GeoTIFF Leaflet Overlay</title>
+<title>GeoTIFF Leaflet Overlay avec cadre</title>
 
 <!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
@@ -14,14 +14,8 @@
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
 <style>
-  html, body {
-    height: 100%;
-    margin: 0;
-  }
-  #map {
-    width: 100%;
-    height: 100vh;
-  }
+  html, body { height: 100%; margin: 0; }
+  #map { width: 100%; height: 100vh; }
 </style>
 </head>
 <body>
@@ -29,43 +23,62 @@
 <div id="map"></div>
 
 <script>
-  // 1. Création de la carte Leaflet
+  // 1. Carte Leaflet
   var map = L.map('map');
 
-  // 2. Ajouter OpenStreetMap en fond
+  // 2. Fond OpenStreetMap
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
   }).addTo(map);
 
-  // 3. Définir les coins de l'image GeoTIFF
+  // 3. Délimitation exacte de l'image GeoTIFF
   var bounds = [
-    [44.509581, -88.0242333], // Lower Left (SW)
-    [44.510931, -88.0222975]  // Upper Right (NE)
+    [44.509581, -88.0242333], // SW - Lower Left
+    [44.510931, -88.0222975]  // NE - Upper Right
   ];
 
-  // 4. Ajouter l'image composite overlay
+  // 4. Overlay de l'image composite
   L.imageOverlay('0.png', bounds).addTo(map);
 
-  // 5. Zoom sur l'image
+  // 5. Rectangle autour de l'image pour montrer la délimitation
+  var rect = L.rectangle(bounds, {
+    color: "#ff7800",
+    weight: 2,
+    fill: false
+  }).addTo(map);
+
+  // 6. Zoom sur l'image
   map.fitBounds(bounds);
 
-  // 6. Ajouter des markers aux coins avec popup
+  // 7. Ajouter des markers aux coins avec popup
   var corners = [
     {coords: [44.510931, -88.0241889], label: "Upper Left"},
     {coords: [44.509611, -88.0242333], label: "Lower Left"},
     {coords: [44.510897, -88.0222975], label: "Upper Right"},
     {coords: [44.509581, -88.0223417], label: "Lower Right"},
-    {coords: [44.510036, -88.0232646], label: "Centre"} // Approx centre
+    {coords: [44.510036, -88.0232646], label: "Centre"} // approximatif
   ];
 
   corners.forEach(function(corner) {
     L.marker(corner.coords)
       .addTo(map)
-      .bindPopup(corner.label + "<br>Lat: " + corner.coords[0].toFixed(6) +
+      .bindPopup("<b>" + corner.label + "</b><br>Lat: " + corner.coords[0].toFixed(6) +
                  "<br>Lon: " + corner.coords[1].toFixed(6));
   });
 
+  // 8. Cliquer pour ajouter un popup à l'intérieur de l'image
+  map.on('click', function(e) {
+      if(e.latlng.lat >= bounds[0][0] && e.latlng.lat <= bounds[1][0] &&
+         e.latlng.lng >= bounds[0][1] && e.latlng.lng <= bounds[1][1]) {
+        L.popup()
+          .setLatLng(e.latlng)
+          .setContent("Lat: " + e.latlng.lat.toFixed(6) + "<br>Lon: " + e.latlng.lng.toFixed(6))
+          .openOn(map);
+      }
+  });
+
 </script>
+
 </body>
 </html>
