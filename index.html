@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drone Images + Leaflet</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+ integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+ integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<style>
+  html, body {
+      height: 100%;
+      margin: 0;
+  }
+
+  /* Carte Leaflet comme fond */
+  #map {
+      position: fixed; /* fixe derrière le contenu */
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+  }
+
+  /* Conteneur principal au-dessus de la carte */
+  .container {
+      position: relative;
+      z-index: 100; /* devant la carte */
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 30px;
+      background: rgba(255,255,255,0.95); /* semi-transparent pour voir la carte derrière */
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      border: 3px solid #3498db;
+      text-align: center;
+  }
+
+  .header img { height: 80px; margin-bottom: 15px; }
+  h1 { color: #2c3e50; margin:0; font-size:28px; }
+
+  .controls { margin: 20px 0; }
+  button {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      margin: 0 10px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      transition: all 0.3s ease;
+  }
+  button:hover { background: #2980b9; transform: translateY(-2px); }
+
+  .image-container, .single-image-container {
+      border: 3px solid #34495e;
+      border-radius: 10px;
+      padding: 10px;
+      margin: 0 auto 20px auto;
+      background: #f8f9fa;
+      text-align: center;
+  }
+
+  .image-grid { 
+      display: grid;
+      grid-template-columns: repeat(4,1fr);
+      grid-template-rows: repeat(4,1fr);
+      gap: 0;
+      width: 1024px;
+      height: 1024px;
+      margin: 0 auto;
+      border: 2px solid #7f8c8d;
+      border-radius: 5px;
+      overflow: hidden;
+  }
+
+  .tile, .single-image { width:100%; height:100%; object-fit:cover; }
+
+  .info { color:#7f8c8d; margin-top:10px; font-style:italic; }
+
+</style>
+</head>
+<body>
+
+<div id="map"></div> <!-- Leaflet en fond -->
+
+<div class="container">
+    <div class="header">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/5/54/Logo_iav.png" alt="Logo IAV">
+        <h1>Image Drone GeoTIFF</h1>
+    </div>
+
+    <div class="controls">
+        <button onclick="showView('composite')">Vue Composite</button>
+        <button onclick="showView('single')">Vue Simple</button>
+    </div>
+
+    <div id="compositeView">
+        <div class="image-container">
+            <div class="image-grid" id="imageGrid"></div>
+        </div>
+        <div class="info">
+            <p>Image recomposée à partir de 16 sections haute définition</p>
+        </div>
+    </div>
+
+    <div id="singleView" style="display:none;">
+        <div class="single-image-container">
+            <img src="0.png" alt="Vue complète" class="single-image">
+        </div>
+        <div class="info"><p>Vue complète en résolution standard</p></div>
+    </div>
+</div>
+
+<script>
+  // Leaflet map
+  const map = L.map('map').setView([51.505, -0.09], 13);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  }).addTo(map);
+
+  // Tuiles images
+  const tilePaths = ["1_0.png","1.png","2.png","3.png","4.png","5.png","6.png","7.png","8.png","9.png","10.png","11.png","12.png","13.png","14.png","15.png"];
+  const grid = document.getElementById('imageGrid');
+  tilePaths.forEach((path,index)=>{
+      const img = document.createElement('img');
+      img.src = path;
+      img.alt=`Tuile ${index}`;
+      img.className='tile';
+      img.onerror = function(){ this.src='https://via.placeholder.com/256/ecf0f1/34495e?text=Tuile+'+index; };
+      grid.appendChild(img);
+  });
+
+  function showView(viewType){
+      document.getElementById('compositeView').style.display=(viewType==='composite')?'block':'none';
+      document.getElementById('singleView').style.display=(viewType==='single')?'block':'none';
+  }
+  showView('composite');
+</script>
+
+</body>
+</html>
