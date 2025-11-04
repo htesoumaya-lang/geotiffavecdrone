@@ -3,79 +3,109 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GeoTIFF Leaflet Overlay avec cadre</title>
+<title>Leaflet - Image figée ou zoomable</title>
 
 <!-- Leaflet CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 <!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
 <style>
   html, body { height: 100%; margin: 0; }
   #map { width: 100%; height: 100vh; }
+  #fixedImage {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 300px;
+    border: 2px solid #555;
+    display: none; /* cachée par défaut */
+    z-index: 999;
+  }
+  .leaflet-top.leaflet-left {
+    margin-top: 60px; /* espace pour les boutons */
+  }
+  .custom-btn {
+    background: white;
+    border: 2px solid #666;
+    border-radius: 5px;
+    padding: 6px 10px;
+    margin: 5px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  .custom-btn:hover {
+    background: #f0f0f0;
+  }
 </style>
 </head>
 <body>
 
 <div id="map"></div>
 
+<!-- Image figée -->
+<img id="fixedImage" src="0.png" alt="Image figée">
+
 <script>
-  // 1. Carte Leaflet
-  var map = L.map('map');
-
-  // 2. Fond OpenStreetMap
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-  }).addTo(map);
-
-  // 3. Délimitation exacte de l'image GeoTIFF
-  var bounds = [
-    [44.509581, -88.0242333], // SW - Lower Left
-    [44.510931, -88.0222975]  // NE - Upper Right
-  ];
-
-  // 4. Overlay de l'image composite
-  L.imageOverlay('0.png', bounds).addTo(map);
-
-  // 5. Rectangle autour de l'image pour montrer la délimitation
-  var rect = L.rectangle(bounds, {
-    color: "#ff7800",
-    weight: 2,
-    fill: false
-  }).addTo(map);
-
-  // 6. Zoom sur l'image
-  map.fitBounds(bounds);
-
-  // 7. Ajouter des markers aux coins avec popup
-  var corners = [
-    {coords: [44.510931, -88.0241889], label: "Upper Left"},
-    {coords: [44.509611, -88.0242333], label: "Lower Left"},
-    {coords: [44.510897, -88.0222975], label: "Upper Right"},
-    {coords: [44.509581, -88.0223417], label: "Lower Right"},
-    {coords: [44.510036, -88.0232646], label: "Centre"} // approximatif
-  ];
-
-  corners.forEach(function(corner) {
-    L.marker(corner.coords)
-      .addTo(map)
-      .bindPopup("<b>" + corner.label + "</b><br>Lat: " + corner.coords[0].toFixed(6) +
-                 "<br>Lon: " + corner.coords[1].toFixed(6));
+  // --- Initialisation de la carte ---
+  var map = L.map('map', {
+    center: [44.5102, -88.0233],
+    zoom: 17,
+    zoomSnap: 0.25,
+    zoomDelta: 0.5
   });
 
-  // 8. Cliquer pour ajouter un popup à l'intérieur de l'image
+  // --- Fond OSM ---
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap'
+  }).addTo(map);
+
+  // --- Limites géographiques de l’image ---
+  var bounds = [
+    [44.509581, -88.0242333], // SW
+    [44.510931, -88.0222975]  // NE
+  ];
+
+  // --- Image synchronisée (géoréférencée) ---
+  var geoImage = L.imageOverlay('0.png', bounds, {opacity: 0.9});
+
+  // --- Rectangle de repère ---
+  var rect = L.rectangle(bounds, {color: "#ff7800", weight: 2, fill: false}).addTo(map);
+  map.fitBounds(bounds);
+
+  // --- Ajout des boutons personnalisés ---
+  var FixedControl = L.Control.extend({
+    onAdd: function() {
+      var div = L.DomUtil.create('div');
+      div.innerHTML = `
+        <button class="custom-btn" id="btnFixed">🧊 Image figée</button><br>
+        <button class="custom-btn" id="btnGeo">🔍 Image zoomable</button>
+      `;
+      return div;
+    }
+  });
+
+  map.addControl(new FixedControl({position: 'topright'}));
+
+  // --- Gestion des clics sur les boutons ---
+  document.getElementById('btnFixed').addEventListener('click', function() {
+    map.removeLayer(geoImage);           // retirer image géo
+    document.getElementById('fixedImage').style.display = 'block'; // montrer image figée
+  });
+
+  document.getElementById('btnGeo').addEventListener('click', function() {
+    document.getElementById('fixedImage').style.display = 'none'; // cacher image figée
+    geoImage.addTo(map); // afficher image géoréférencée
+    map.fitBounds(bounds);
+  });
+
+  // --- Popup coordonnées au clic ---
   map.on('click', function(e) {
-      if(e.latlng.lat >= bounds[0][0] && e.latlng.lat <= bounds[1][0] &&
-         e.latlng.lng >= bounds[0][1] && e.latlng.lng <= bounds[1][1]) {
-        L.popup()
-          .setLatLng(e.latlng)
-          .setContent("Lat: " + e.latlng.lat.toFixed(6) + "<br>Lon: " + e.latlng.lng.toFixed(6))
-          .openOn(map);
-      }
+    L.popup()
+      .setLatLng(e.latlng)
+      .setContent("Lat: " + e.latlng.lat.toFixed(6) + "<br>Lon: " + e.latlng.lng.toFixed(6))
+      .openOn(map);
   });
 
 </script>
