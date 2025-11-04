@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Leaflet - Image figée ou zoomable</title>
+<title>Orthophoto sur Leaflet</title>
 
 <!-- Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
@@ -12,93 +12,39 @@
 <style>
   html, body { height: 100%; margin: 0; }
   #map { width: 100%; height: 100vh; }
-  #fixedImage {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    object-fit: contain;
-    z-index: 800;
-    display: none; /* cachée par défaut */
-    background: black;
-  }
-  .custom-btn {
-    background: white;
-    border: 2px solid #666;
-    border-radius: 6px;
-    padding: 8px 12px;
-    margin: 4px;
-    cursor: pointer;
-    font-weight: bold;
-  }
-  .custom-btn:hover {
-    background: #eee;
-  }
 </style>
 </head>
 <body>
 
-<!-- Carte Leaflet -->
 <div id="map"></div>
-
-<!-- Image figée -->
-<img id="fixedImage" src="0.png" alt="Image orthophoto figée">
 
 <script>
   // === Initialisation de la carte ===
   const map = L.map('map', {
     center: [44.5102, -88.0233],
-    zoom: 22
+    zoom: 17
   });
 
   // === Fond OpenStreetMap ===
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 50,
+    maxZoom: 19,
     attribution: '&copy; OpenStreetMap'
   }).addTo(map);
 
-  // === Limites géographiques de l’image ===
+  // === Limites géographiques de ton image (d’après tes coins GDAL) ===
   const bounds = [
-    [44.509581, -88.0242333], // Sud-Ouest
-    [44.510931, -88.0222975]  // Nord-Est
+    [44.509581, -88.0242333], // Sud-Ouest (Lower Left)
+    [44.510931, -88.0222975]  // Nord-Est (Upper Right)
   ];
 
-  // === Image géoréférencée ===
-  const geoImage = L.imageOverlay('0.png', bounds, { opacity: 0.95 }).addTo(map);
+  // === Ajout de ton orthophoto ===
+  const ortho = L.imageOverlay('0.png', bounds, { opacity: 0.95 }).addTo(map);
 
   // === Rectangle de repère ===
   L.rectangle(bounds, { color: "orange", weight: 2, fill: false }).addTo(map);
   map.fitBounds(bounds);
 
-  // === Création des boutons ===
-  const controlDiv = L.DomUtil.create('div', 'leaflet-bar');
-  controlDiv.style.background = 'white';
-  controlDiv.style.padding = '4px';
-  controlDiv.innerHTML = `
-    <button class="custom-btn" id="btnFixed">🧊 Image figée</button><br>
-    <button class="custom-btn" id="btnGeo">🔍 Image zoomable</button>
-  `;
-
-  const customControl = L.control({ position: 'topright' });
-  customControl.onAdd = function () {
-    return controlDiv;
-  };
-  customControl.addTo(map);
-
-  // === Gestion des boutons ===
-  document.getElementById('btnFixed').onclick = () => {
-    map.removeLayer(geoImage);
-    document.getElementById('fixedImage').style.display = 'block';
-  };
-
-  document.getElementById('btnGeo').onclick = () => {
-    document.getElementById('fixedImage').style.display = 'none';
-    geoImage.addTo(map);
-    map.fitBounds(bounds);
-  };
-
-  // === Popup coordonnées ===
+  // === Popup coordonnées sur clic ===
   map.on('click', e => {
     L.popup()
       .setLatLng(e.latlng)
@@ -109,5 +55,3 @@
 
 </body>
 </html>
-
-
