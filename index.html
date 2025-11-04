@@ -49,12 +49,12 @@
   // === Initialisation de la carte ===
   const map = L.map('map', {
     center: [44.5102, -88.0233],
-    zoom: 17
+    zoom: 22
   });
 
   // === Fond OpenStreetMap ===
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
+    maxZoom: 30,
     attribution: '&copy; OpenStreetMap'
   }).addTo(map);
 
@@ -109,3 +109,4 @@
 
 </body>
 </html>
+
